@@ -94,9 +94,9 @@ US at the Census [tract](https://en.wikipedia.org/wiki/Census_tract) and
 [block group](https://en.wikipedia.org/wiki/Census_block_group) levels.
 You will be working with block group data that has been downloaded from
 the [EPA site](https://www.epa.gov/ejscreen/download-ejscreen-data). To
-understand the associated data columns, you will need to explore the
+understand the associated data columns, I needed to explore the
 Technical Documentation and column description spreadsheet available in
-the data folder. I also encourage you to explore the [limitations and
+the data folder. I also explored the [limitations and
 caveats](https://www.epa.gov/ejscreen/limitations-and-caveats-using-ejscreen)
 of the data.
 
