@@ -212,11 +212,11 @@ nrow(pm25_cbg) / nrow(la_county) * 100
 
 ```
 
-**The data indicates that the percent of census block groups that have
+*The data indicates that the percent of census block groups that have
 less than 5% of the population is considered low income is 6.11%. The
 percent of census block groups that are above the 80th percentile for
 Particulate Matter 2.5 AND above the 80th percentile for Superfund
-proximity is 17.35 %.**
+proximity is 17.35 %.*
 
 Importing redlining information for Los Angeles.
 
@@ -266,8 +266,8 @@ redlining_cbgs2 <- actual_la[sel_logical, ] # filter census block groups based o
 print(paste("The number of census block groups that fall within areas with HOLC grads are:", nrow(redlining_cbgs2)))
 ```
 
-**The number of census block groups that fall within areas with HOLC
-grads are 3991.**
+*The number of census block groups that fall within areas with HOLC
+grads are 3991.*
 
 In this next part, I wanted to summarize current conditions based on
 EJScreen data within historical redlining categories using the mean of
@@ -315,14 +315,14 @@ print(mean_values)
 
 ```
 
-**These means show that HOLC grad D tends to have higher means on
-average than A, B, and C. If you take a look at the map of Los Angeles
-County, you could see that the inner city is mostly HOLC grad D, and
-falls in this order from higher density to lower: D, C, B, and A. This
-means that on average they have lower income percentage, and are in the
-area with higher percentile for particulate matter 2.5, they are in the
-higher percentile for low life expectancy, and higher percentile for air
-toxics cancer risk.**
+*These means show that HOLC grad D tends to have higher means on average
+than A, B, and C. If you take a look at the map of Los Angeles County,
+you could see that the inner city is mostly HOLC grad D, and falls in
+this order from higher density to lower: D, C, B, and A. This means that
+on average they have lower income percentage, and are in the area with
+higher percentile for particulate matter 2.5, they are in the higher
+percentile for low life expectancy, and higher percentile for air toxics
+cancer risk.*
 
 ### Investigate the legacy of redlining in biodiversity observations
 
@@ -358,11 +358,11 @@ ggplot(holc_percent, aes(x = grade, y = percentage)) +
 
 ```
 
-**Given the historical context, I expected A and B HOLC grads to have
+*Given the historical context, I expected A and B HOLC grads to have
 more bird observations, but since this is more recent (only 2022
 observations) there has been conservation efforts to conduct more bird
 observations within C and D HOLC grads. One reason for the increased
 percentage in C and potentially D is gentrification, although on average
 they are still 'cold spots' within bird biodiversity observations, it is
 possible that only pulling 2022 data can show the effect of
-gentrification on bird observations.**
+gentrification on bird observations.*
