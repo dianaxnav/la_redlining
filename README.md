@@ -16,7 +16,7 @@ la_redlining
 
 ## Data Access 
 
-Since I have included data in my .gitignore, you can access the files here.
+**Note:** the data associated with this assignment is too large to include in the GitHub repo. Instead, I am downloading the data from [here](https://drive.google.com/file/d/1bTk62xwOzBqWmmT791SbYbHxnCdjmBtw/view?usp=sharing). Unzip the folder and all the contents and store in your directory as follows.
 
 ## References
 
