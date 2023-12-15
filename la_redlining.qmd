@@ -1,0 +1,368 @@
+---
+title: 'History of LA Redlining'
+author: "{Diana Navarro}"
+output: 
+  html_document:
+    df_print: paged
+date: "2023-12-15"
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(include = TRUE, message = FALSE, warning = FALSE)
+```
+
+## Overview
+
+Present-day environmental justice may reflect legacies of injustice in
+the past. The United States has a long history of racial segregation
+which is still visible. During the 1930's the Home Owners' Loan
+Corporation (HOLC), as part of the New Deal, rated neighborhoods based
+on their perceived safety for real estate investment. Their ranking
+system, (A (green), B (blue), C (yellow), D (red)) was then used to
+block access to loans for home ownership. Colloquially known as
+"redlining", this practice has had widely-documented consequences not
+only for community wealth, but also health.[^1] Redlined neighborhoods
+have less greenery[^2] and are hotter than other neighborhoods.[^3]
+
+[^1]: Gee, G. C. (2008). A multilevel analysis of the relationship
+    between institutional and individual racial discrimination and
+    health status. American journal of public health, 98(Supplement_1),
+    S48-S56.
+
+[^2]: Nardone, A., Rudolph, K. E., Morello-Frosch, R., & Casey, J. A.
+    (2021). Redlines and greenspace: the relationship between historical
+    redlining and 2010 greenspace across the United States.
+    Environmental health perspectives, 129(1), 017006.
+
+[^3]: Hoffman, J. S., Shandas, V., & Pendleton, N. (2020). The effects
+    of historical housing policies on resident exposure to intra-urban
+    heat: a study of 108 US urban areas. Climate, 8(1), 12.
+
+Check out coverage by the [New York
+Times](https://www.nytimes.com/interactive/2020/08/24/climate/racism-redlining-cities-global-warming.html).
+
+A recent study found that redlining has not only affected the
+environments communities are exposed to, it has also shaped our
+observations of biodiversity.[^4] Community or citizen science, whereby
+individuals share observations of species, is generating an enormous
+volume of data. Ellis-Soto and co-authors found that redlined
+neighborhoods remain the most undersampled areas across 195 US cities.
+This gap is highly concerning, because conservation decisions are made
+based on these data.
+
+[^4]: Ellis-Soto, D., Chapman, M., & Locke, D. H. (2023). Historical
+    redlining is associated with increasing geographical disparities in
+    bird biodiversity sampling in the United States. Nature Human
+    Behaviour, 1-9.
+
+Check out coverage by
+[EOS](https://eos.org/articles/bird-biodiversity-reports-reflect-cities-redlined-past?utm_source=EosBuzz&mkt_tok=OTg3LUlHVC01NzIAAAGOx3ckQPpeDY3QyFKdUnBSYqILj3qLrgb_Q2lasphwcF90xEzMgjZFUo3NHsw3caXDcZe6I8D8qdVsSRr3wzhb6LKAQRgNo8ffhjieEbDwMw).
+
+### Data
+
+#### EJScreen
+
+I will be working with data from the United States Environmental
+Protection Agency's EJScreen: Environmental Justice Screening and
+Mapping Tool.
+
+According to the [US EPA
+website](https://www.epa.gov/ejscreen/purposes-and-uses-ejscreen):
+
+> This screening tool and data may be of interest to community residents
+> or other stakeholders as they search for environmental or demographic
+> information. It can also support a wide range of research and policy
+> goals. The public has used EJScreen in many different locations and in
+> many different ways.
+>
+> EPA is sharing EJScreen with the public:
+>
+> -   to be more transparent about how we consider environmental justice
+>     in our work,
+>
+> -   to assist our stakeholders in making informed decisions about
+>     pursuing environmental justice and,
+>
+> -   to create a common starting point between the agency and the
+>     public when looking at issues related to environmental justice.
+
+EJScreen provides on environmental and demographic information for the
+US at the Census [tract](https://en.wikipedia.org/wiki/Census_tract) and
+[block group](https://en.wikipedia.org/wiki/Census_block_group) levels.
+You will be working with block group data that has been downloaded from
+the [EPA site](https://www.epa.gov/ejscreen/download-ejscreen-data). To
+understand the associated data columns, you will need to explore the
+Technical Documentation and column description spreadsheet available in
+the data folder. I also encourage you to explore the [limitations and
+caveats](https://www.epa.gov/ejscreen/limitations-and-caveats-using-ejscreen)
+of the data.
+
+#### Mapping Inequality
+
+A team of researchers, led by the [Digital Scholarship
+Lab](https://dsl.richmond.edu/) at the University of Richmond have
+digitized maps and information from the HOLC as part of the [Mapping
+Inequality](https://dsl.richmond.edu/panorama/redlining/#loc=5/39.1/-94.58)
+project.
+
+I will be working with maps of HOLC grade designations for Los Angeles.
+Information on the data can be found
+[here](https://dsl.richmond.edu/panorama/redlining/#loc=5/39.1/-94.58&text=downloads).[^5]
+
+[^5]: Robert K. Nelson, LaDale Winling, Richard Marciano, Nathan
+    Connolly, et al., "Mapping Inequality," American Panorama, ed.
+    Robert K. Nelson and Edward L. Ayers, accessed October 17, 2023,
+    <https://dsl.richmond.edu/panorama/redlining/>
+
+#### Biodiversity observations
+
+The [Global Biodiversity Information Facility](gbif.org) is the largest
+aggregator of biodiversity observations in the world. Observations
+typically include a location and date that a species was observed, and
+for this project, I will be working with 2021 data onward.
+
+### Investigate the legacy of redlining in current environmental (in)justice
+
+#### Load the appropriate libraries
+
+```{r }
+library(tidyverse)
+library(sf)
+library(raster)
+library(spData)
+library(spDataLarge)
+library(tidyverse)
+library(ggspatial)
+library(patchwork)
+library(tmap)
+```
+
+Reading in EJScreen data and filtering to Los Angeles County.
+
+```{r }
+# read in geodatabase of EJScreen data at the Census Block Group level
+ejscreen <- st_read("data/EJSCREEN_2023_BG_StatePct_with_AS_CNMI_GU_VI.gdb/") 
+
+# filter to a county you are interested in
+la_county <- ejscreen %>%
+  filter(CNTY_NAME %in% c("Los Angeles County"))
+
+#this is for centroid data
+county_blockgroup_centroids <- st_centroid(la_county)
+```
+
+In this section, I am creating a visualization of:
+
+-   Wastewater discharge by census block groups.
+
+-   Indicating which census block groups are above the 95th percentile
+    of national values for wastewater discharge.
+
+    -   Adding a centroid point to display this.
+
+```{r}
+#grab only the data above the 95th percentile
+centroid95 <- county_blockgroup_centroids %>% 
+  filter(P_PWDIS > 95)
+
+#plot the points
+tm_shape(la_county) +
+  tm_fill(fill = "P_PWDIS", 
+          title = "Wastewater discharge", 
+          palette = "viridis") +
+  tm_shape(centroid95) +
+  tm_dots(size = 0.10, 
+          aes(color = "red"), 
+          fill_alpha = 1.00) +
+  tm_add_legend(type="fill",
+					  title="Census block groups",
+					  labels = c('Above 95 percentile'),
+					  fill = "red") +
+  tm_grid(crs= 4326, labels.size = .4)+
+  tm_scale_bar()+
+  tm_compass(position = c("left", "bottom"), 
+             size = 1.0) +
+  tm_xlab("Longitude")+
+  tm_ylab("Latitude") +
+  tm_title("Wastewater Discharge by Census Block Group", size = .5) #it cuts off as I make the size larger so had to set to 0.5
+```
+
+Now, I am finding the percent of census block groups that:
+
+-   have less than 5% of the population is considered low income
+
+-   are above the 80th percentile for Particulate Matter 2.5
+
+-   are above the 80th percentile for Superfund proximity.
+
+```{r }
+low_income <- la_county %>% 
+  filter(LOWINCPCT < 0.05)
+
+#nrow(low_income)
+nrow(low_income)/ nrow(la_county) * 100
+
+pm25_cbg <- la_county %>% 
+  filter(P_PM25 > 80 & P_PNPL > 80)
+
+nrow(pm25_cbg) / nrow(la_county) * 100
+
+```
+
+**The data indicates that the percent of census block groups that have
+less than 5% of the population is considered low income is 6.11%. The
+percent of census block groups that are above the 80th percentile for
+Particulate Matter 2.5 AND above the 80th percentile for Superfund
+proximity is 17.35 %.**
+
+Importing redlining information for Los Angeles.
+
+```{r }
+LA_redlining <- st_read("https://dsl.richmond.edu/panorama/redlining/static/citiesData/CALosAngeles1939/geojson.json") %>%
+  st_make_valid()
+
+```
+
+Visualizing historic redlining boundaries in LA, by HOLC grade:
+
+```{r}
+tm_shape(LA_redlining) +
+  tm_fill(fill = "grade", 
+          title = "HOLC Grade", 
+          palette = "magma") +
+  tm_shape(la_county) +
+  tm_borders(col_alpha = 0.1) +
+  tm_graticules() +
+  tm_scalebar() + 
+  tm_compass(position = c("right", "top"), 
+             size = 1)+
+  tm_title("Historical redlining boundaries by HOLC grade") +
+  tm_xlab("Longitude") +
+  tm_ylab("Latitude") 
+```
+
+Now I want to find the number of census block groups that fall within
+the areas with HOLC grades.
+
+```{r eval = TRUE}
+#check out the crs of each 
+#st_crs(la_county) == st_crs(LA_redlining)
+#change the crs using st transform
+actual_la <- st_transform(la_county, crs = 4326)
+
+#length of st_intersect would be the number of census blocks
+#crs_match <- st_intersection(LA_redlining,actual_la)
+
+# try using the st_intersects functions
+
+sel_sgbp <- st_intersects(x = actual_la, y = LA_redlining) # returns binary predicate list
+sel_logical = lengths(sel_sgbp) > 0 # create logical of which items do intersect
+redlining_cbgs2 <- actual_la[sel_logical, ] # filter census block groups based on logicals
+
+# the number of census block groups
+print(paste("The number of census block groups that fall within areas with HOLC grads are:", nrow(redlining_cbgs2)))
+```
+
+**The number of census block groups that fall within areas with HOLC
+grads are 3991.**
+
+In this next part, I wanted to summarize current conditions based on
+EJScreen data within historical redlining categories using the mean of
+the following variables:
+
+-   \% low income.
+
+-   percentile for particulate Matter 2.5
+
+-   percentile for low life expectancy.
+
+-   percentile for air toxics cancer risk
+
+```{r }
+#create data set
+la_county1 <- st_join(LA_redlining, actual_la, join = st_intersects)
+
+#check for NAs in datasets
+#sum(is.na(la_county1$P_LIFEEXPPCT))
+#sum(is.na(la_county1$P_CANCER))
+
+#mean of each cols by holc_grade
+mean_values <- la_county1 %>%
+  group_by(grade) %>%
+  summarize(
+    lowinc_mean = mean(LOWINCPCT[grade == "A" | 
+                                  grade == "B" | 
+                                  grade == "C" | 
+                                  grade == "D"], na.rm = TRUE),
+    PM25_mean = mean(P_PM25[grade == "A" | 
+                                  grade == "B" | 
+                                  grade == "C" | 
+                                  grade == "D"], na.rm = TRUE),
+    lifeexp_mean = mean(P_LIFEEXPPCT[grade == "A" | 
+                                  grade == "B" | 
+                                  grade == "C" | 
+                                  grade == "D"], na.rm = TRUE),
+    cancerisk_mean = mean(P_CANCER[grade == "A" | 
+                                  grade == "B" | 
+                                  grade == "C" | 
+                                  grade == "D"], na.rm = TRUE)
+    )
+
+print(mean_values) 
+
+```
+
+**These means show that HOLC grad D tends to have higher means on
+average than A, B, and C. If you take a look at the map of Los Angeles
+County, you could see that the inner city is mostly HOLC grad D, and
+falls in this order from higher density to lower: D, C, B, and A. This
+means that on average they have lower income percentage, and are in the
+area with higher percentile for particulate matter 2.5, they are in the
+higher percentile for low life expectancy, and higher percentile for air
+toxics cancer risk.**
+
+### Investigate the legacy of redlining in biodiversity observations
+
+In order to understand how many bird observations fall within
+neighborhoods with HOLC grads, I plotted the distribution of percent of
+observations within each redlining categories.
+
+```{r}
+#call the data from the file
+birdy_data <- st_read("data/gbif-birds-LA") 
+
+#select data from 2022
+birdy_year <- birdy_data[birdy_data$year == 2022, ]
+
+#check to make sure the crs lines up 
+#st_crs(LA_redlining) == st_crs(birdy_data)
+
+#combine the dataset
+birdy_dat1 <- st_join(LA_redlining,birdy_year, join = st_intersects)
+
+#find the percentage of holcgrades
+holc_percent <- birdy_dat1 %>%
+  st_drop_geometry() %>% 
+  group_by(grade) %>%
+  summarize(percentage = n()/nrow(birdy_dat1) *100) 
+
+print(holc_percent)
+
+#plot the percentages
+ggplot(holc_percent, aes(x = grade, y = percentage)) +
+  geom_col(fill = "cornflowerblue")+
+  labs(title = "Bird Observations within redlining boundaries in 2022 ", x = "HOLC Grade", y = "Percentage of Bird observations")
+
+```
+
+**Given the historical context, I expected A and B HOLC grads to have
+more bird observations, but since this is more recent (only 2022
+observations) there has been conservation efforts to conduct more bird
+observations within C and D HOLC grads. One reason for the increased
+percentage in C and potentially D is gentrification, although on average
+they are still 'cold spots' within bird biodiversity observations, it is
+possible that only pulling 2022 data can show the effect of
+gentrification on bird observations.**
